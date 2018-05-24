@@ -1,0 +1,17 @@
+{
+  "extends": ["tslint:latest", "tslint-config-prettier"],
+  "rules": {
+    "no-string-throw": true,
+    "no-unused-expression": true,
+    "no-duplicate-variable": true,
+    "curly": true,
+    "class-name": true,
+    "semicolon": [true, "always"],
+    "quotemark": [true, "single"],
+    "triple-equals": true,
+    "no-console": false,
+    "max-classes-per-file": false,
+    "object-literal-sort-keys": false
+  },
+  "defaultSeverity": "warning"
+}

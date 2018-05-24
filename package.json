@@ -1,0 +1,48 @@
+{
+  "name": "exuberant-ctags",
+  "displayName": "Exuberant CTags",
+  "description": "Exuberant CTags support for VS Code",
+  "version": "0.0.1",
+  "publisher": "chriswheeldon",
+  "engines": {
+    "vscode": "^1.23.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onLanguage:c",
+    "onLanguage:cpp",
+    "onCommand:extension.reloadCTags",
+    "onCommand:extension.regenerateCTags"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.reloadCTags",
+        "title": "Ctags Support: reload tags file"
+      },
+      {
+        "command": "extension.regenerateCTags",
+        "title": "Ctags Support: regenerate tags file"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^7.0.43",
+    "tslint": "^5.8.0",
+    "tslint-config-prettier": "^1.12.0",
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.6"
+  },
+  "prettier": {
+    "singleQuote": true
+  }
+}
