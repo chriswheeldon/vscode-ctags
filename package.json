@@ -50,5 +50,6 @@
   },
   "prettier": {
     "singleQuote": true
-  }
+  },
+  "icon": "images/icon.png"
 }
