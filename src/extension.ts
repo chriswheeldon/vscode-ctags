@@ -21,7 +21,8 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
         const locations = matches.map(match => {
           return new vscode.Location(
             vscode.Uri.file(match.path),
-            new vscode.Position(match.lineno, 0);
+            new vscode.Position(match.lineno, 0)
+          );
         });
         resolve(locations);
       });
