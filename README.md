@@ -4,11 +4,11 @@ A CTags definitions provider for VSCode.
 
 ## Features
 
-* Registers with VSCode as a definitions provider for C/C++ files.
-* Provides fast lookup even on large tags files.
-* Handles symbols with multiple definitions.
-* Provides commands for regenerating and reindexing the tags file.
-* Integrates with the status bar to provide progress updates during tags file generation and indexing.
+- Registers with VSCode as a definitions provider for C/C++ files.
+- Provides fast lookup even on large tags files.
+- Handles symbols with multiple definitions.
+- Provides commands for regenerating and reindexing the tags file.
+- Integrates with the status bar to provide progress updates during tags file generation and indexing.
 
 ## Requirements
 
@@ -18,8 +18,9 @@ in the workspace root directory recursively (equivalent to running: `ctags -R -f
 
 ## Known Issues
 
-* Not curently possible to configure the name of the tags file.
-* Does not regenerate and reindex the tags file on save.
+- Not possible to configure the name of the tags file.
+- Not possible to add additional paths to index (e.g. /usr/include).
+- Does not regenerate and reindex the tags file on save.
 
 ## Release Notes
 
