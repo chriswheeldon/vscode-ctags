@@ -78,11 +78,13 @@ class CTagsReader {
   }
 
   private parsePattern(token: string): RegExp | number | null {
-    if (token.startsWith('/^') && token.endsWith('$/;"')) {
-      // tag pattern is a no-magic pattern with anchors (/^...$/)
+    if (token.startsWith('/^') && token.endsWith('/;"')) {
+      // tag pattern is a no-magic pattern with start and possibly end anchors (/^...$/)
       // http://vimdoc.sourceforge.net/htmldoc/pattern.html#/magic
       // http://ctags.sourceforge.net/FORMAT
-      return new RegExp('^' + regexEscape(token.slice(2, -4)) + '$');
+      const anchoredEol = token.endsWith('$/;"');
+      const end = anchoredEol ? -4 : -3;
+      return new RegExp('^' + regexEscape(token.slice(2, end)) + (anchoredEol ? '$' : ''));
     }
     const lineno = parseInt(token, 10);
     if (!isNaN(lineno)) {
