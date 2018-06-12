@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 import { isNullOrUndefined } from 'util';
+import * as util from './util';
 
 function regexEscape(s: string): string {
   // modified version of the regex escape from 1.
@@ -47,7 +48,7 @@ class CTagsReader {
         }
       });
       rl.on('close', () => {
-        console.log(`CTags indexing complete, found ${tags.length} tags`);
+        util.log(`CTags indexing complete, found ${tags.length} tags`);
         resolve(tags);
       });
       readStream.on('error', (error: string) => {
@@ -84,7 +85,9 @@ class CTagsReader {
       // http://ctags.sourceforge.net/FORMAT
       const anchoredEol = token.endsWith('$/;"');
       const end = anchoredEol ? -4 : -3;
-      return new RegExp('^' + regexEscape(token.slice(2, end)) + (anchoredEol ? '$' : ''));
+      return new RegExp(
+        '^' + regexEscape(token.slice(2, end)) + (anchoredEol ? '$' : '')
+      );
     }
     const lineno = parseInt(token, 10);
     if (!isNaN(lineno)) {
@@ -148,7 +151,7 @@ export class CTagsIndex {
         resolve(match);
       });
       rs.on('error', (error: string) => {
-        console.log('findTagsInFile:', error);
+        util.log('findTagsInFile:', error);
         resolve(match);
       });
     });

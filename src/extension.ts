@@ -2,6 +2,7 @@
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import * as ctags from './ctags';
+import * as util from './util';
 
 const tagsfile = 'tags';
 let ctagsIndex: ctags.CTagsIndex;
@@ -16,9 +17,11 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
       const query = document.getText(document.getWordRangeAtPosition(position));
       ctagsIndex.lookup(query).then(matches => {
         if (!matches) {
+          util.log(`"${query}" has no matches`);
           return reject();
         }
         const locations = matches.map(match => {
+          util.log(`"${query}" matches ${match.path}:${match.lineno}`);
           return new vscode.Location(
             vscode.Uri.file(match.path),
             new vscode.Position(match.lineno, 0)
@@ -91,7 +94,7 @@ function regenerateCTags() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('CTags extension active');
+  util.log('CTags extension active');
 
   ctagsIndex = new ctags.CTagsIndex(vscode.workspace.rootPath || '', tagsfile);
   reindexTags();
