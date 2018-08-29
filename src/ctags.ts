@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+import { trie } from 'trie.ts';
 import { isNullOrUndefined } from 'util';
 import * as util from './util';
-import { trie } from 'trie.ts'
 
 function regexEscape(s: string): string {
   // modified version of the regex escape from 1.
@@ -99,7 +99,7 @@ class CTagsReader {
 }
 
 export class CTagsIndex {
-  private tags: Promise<trie<Tag>> = Promise.resolve(new trie<Tag>());
+  private tags: Promise<trie<Tag[]>> = Promise.resolve(new trie<Tag[]>());
   private baseDir: string;
   private reader: CTagsReader;
 
@@ -108,23 +108,26 @@ export class CTagsIndex {
     this.reader = new CTagsReader(path.join(baseDir, filename));
   }
 
-  public reindex(): Promise<trie<Tag>> {
+  public reindex(): Promise<trie<Tag[]>> {
     this.tags = this.reader.readTags().then((tags) => {
-      const t = new trie<Tag>();
+      const tr = new trie<Tag[]>();
       tags.forEach((tag) => {
-        t.insert(tag.name, tag);
+        const indexed = tr.get(tag.name);
+        if (!indexed) {
+          tr.insert(tag.name, [tag]);
+        } else {
+          indexed.push(tag);
+        }
       });
-      return t;
+      return tr;
     });
     return this.tags;
   }
 
   public async lookup(symbol: string): Promise<Match[] | null> {
     const tags = await this.tags;
-    const matches = tags.map(symbol, (str: string, t: Tag) => {
-      return t;
-    });
-    if (!matches.length) {
+    const matches = tags.get(symbol);
+    if (!matches) {
       return Promise.resolve(null);
     }
     return Promise.all<Match>(matches.map(this.resolveMatch.bind(this)));

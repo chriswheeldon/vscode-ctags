@@ -42,7 +42,7 @@ function reindexTagsWithProgress(
     .then(tags => {
       progress.report({ increment: 100 });
       vscode.window.setStatusBarMessage(
-        `CTags indexing complete. Indexed ${tags.length} tags.`,
+        `CTags indexing complete.`,
         3000
       );
     })
