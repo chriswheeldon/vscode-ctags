@@ -42,7 +42,7 @@ function reindexTagsWithProgress(
     .then(tags => {
       progress.report({ increment: 100 });
       vscode.window.setStatusBarMessage(
-        `CTags indexing complete.`,
+        `Indexing CTags complete. Indexed ${ctagsIndex.length} tags.`,
         3000
       );
     })
@@ -58,8 +58,7 @@ function reindexTagsWithProgress(
 function reindexTags() {
   vscode.window.withProgress(
     {
-      location: vscode.ProgressLocation.Window,
-      title: 'Indexing CTags'
+      location: vscode.ProgressLocation.Window
     },
     (progress, token) => {
       return reindexTagsWithProgress(progress);

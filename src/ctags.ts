@@ -102,13 +102,20 @@ export class CTagsIndex {
   private tags: Promise<trie<Tag[]>> = Promise.resolve(new trie<Tag[]>());
   private baseDir: string;
   private reader: CTagsReader;
+  private len: number;
 
   constructor(baseDir: string, filename: string) {
     this.baseDir = baseDir;
     this.reader = new CTagsReader(path.join(baseDir, filename));
+    this.len = 0;
+  }
+
+  public get length(): number {
+    return this.len;
   }
 
   public reindex(): Promise<trie<Tag[]>> {
+    this.len = 0;
     this.tags = this.reader.readTags().then((tags) => {
       const tr = new trie<Tag[]>();
       tags.forEach((tag) => {
@@ -119,6 +126,7 @@ export class CTagsIndex {
           indexed.push(tag);
         }
       });
+      this.len = tags.length;
       return tr;
     });
     return this.tags;

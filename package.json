@@ -42,17 +42,17 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.42",
-    "@types/node": "^7.0.43",
-    "tslint": "^5.8.0",
-    "tslint-config-prettier": "^1.12.0",
-    "typescript": "^2.6.1",
-    "vscode": "^1.1.6"
+    "@types/node": "^7.0.69",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^2.9.2",
+    "vscode": "^1.1.21"
   },
   "prettier": {
     "singleQuote": true
   },
   "icon": "images/icon.png",
   "dependencies": {
-    "trie.ts": "0.0.4"
+    "trie.ts": "0.0.5"
   }
 }
