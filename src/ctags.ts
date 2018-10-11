@@ -166,10 +166,12 @@ export class CTagsIndex {
         lineno++;
       });
       rl.on('close', () => {
+        rs.destroy();
         resolve(match);
       });
       rs.on('error', (error: string) => {
         util.log('findTagsInFile:', error);
+        rs.destroy();
         resolve(match);
       });
     });
