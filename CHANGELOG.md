@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.4]
+
+- Destroy fs.ReadStream after resolving match (prevents file handle leaks)
+
 ## [0.0.3]
 
 - Fix up handling of tags without an end of line anchor (#defines?)
