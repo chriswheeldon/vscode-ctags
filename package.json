@@ -2,7 +2,7 @@
   "name": "exuberant-ctags",
   "displayName": "Exuberant CTags",
   "description": "Exuberant CTags support for VS Code",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "chriswheeldon",
   "engines": {
     "vscode": "^1.23.0"
@@ -53,6 +53,6 @@
   },
   "icon": "images/icon.png",
   "dependencies": {
-    "trie.ts": "0.0.5"
+    "trie.ts": "0.0.6"
   }
 }

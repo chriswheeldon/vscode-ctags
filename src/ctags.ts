@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 import { trie } from 'trie.ts';
-import { isNullOrUndefined } from 'util';
 import * as util from './util';
+import { EventEmitter } from 'events';
 
 function regexEscape(s: string): string {
   // modified version of the regex escape from 1.
@@ -12,12 +12,16 @@ function regexEscape(s: string): string {
   // 1. https://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
   return s.replace(/[-^$*+?.()|[\]{}]/g, '\\$&');
 }
+interface TagValue {
+  dir: symbol;
+  filename: string;
+  pattern: string;
+}
 
 interface Tag {
   name: string;
   path: string;
-  pattern?: RegExp;
-  lineno?: number;
+  pattern: string;
 }
 
 export interface Match {
@@ -25,38 +29,35 @@ export interface Match {
   lineno: number;
 }
 
-class CTagsReader {
+class CTagsReader extends EventEmitter {
   private tagspath: string;
 
   constructor(tagspath: string) {
+    super();
     this.tagspath = tagspath;
   }
 
   /**
    * readTags
    */
-  public readTags(): Promise<Tag[]> {
+  public readTags(): void {
     const readStream = fs.createReadStream(this.tagspath);
     const rl = readline.createInterface({
       input: readStream
     });
-    const p = new Promise<Tag[]>((resolve, reject) => {
-      const tags: Tag[] = [];
-      rl.on('line', line => {
-        const tag = this.parseTagLine(line);
-        if (tag) {
-          tags.push(tag);
-        }
-      });
-      rl.on('close', () => {
-        util.log(`CTags indexing complete, found ${tags.length} tags`);
-        resolve(tags);
-      });
-      readStream.on('error', (error: string) => {
-        reject(error);
-      });
+    rl.on('line', line => {
+      const tag = this.parseTagLine(line);
+      if (tag) {
+        this.emit("tag", tag);
+      }
     });
-    return p;
+    rl.on('close', () => {
+      this.emit('end');
+      readStream.destroy();
+    });
+    readStream.on('error', (error: string) => {
+      this.emit('end');
+    });
   }
 
   private parseTagLine(line: string): Tag | null {
@@ -70,64 +71,52 @@ class CTagsReader {
     if (tokens.length < 3) {
       return null;
     }
-    const pattern = this.parsePattern(tokens[2]);
     return {
       name: tokens[0],
       path: tokens[1],
-      pattern: pattern instanceof RegExp ? pattern : undefined,
-      lineno: typeof pattern === 'number' ? pattern : undefined
+      pattern: tokens[2]
     };
-  }
-
-  private parsePattern(token: string): RegExp | number | null {
-    if (token.startsWith('/^') && token.endsWith('/;"')) {
-      // tag pattern is a no-magic pattern with start and possibly end anchors (/^...$/)
-      // http://vimdoc.sourceforge.net/htmldoc/pattern.html#/magic
-      // http://ctags.sourceforge.net/FORMAT
-      const anchoredEol = token.endsWith('$/;"');
-      const end = anchoredEol ? -4 : -3;
-      return new RegExp(
-        '^' + regexEscape(token.slice(2, end)) + (anchoredEol ? '$' : '')
-      );
-    }
-    const lineno = parseInt(token, 10);
-    if (!isNaN(lineno)) {
-      return lineno - 1;
-    }
-    return null;
   }
 }
 
 export class CTagsIndex {
-  private tags: Promise<trie<Tag[]>> = Promise.resolve(new trie<Tag[]>());
+  private tags: Promise<trie<TagValue[]>> = Promise.resolve(new trie<TagValue[]>());
   private baseDir: string;
   private reader: CTagsReader;
-  private len: number;
+  private len: number = 0;
 
   constructor(baseDir: string, filename: string) {
     this.baseDir = baseDir;
     this.reader = new CTagsReader(path.join(baseDir, filename));
-    this.len = 0;
   }
 
   public get length(): number {
     return this.len;
   }
 
-  public reindex(): Promise<trie<Tag[]>> {
+  public reindex(): Promise<trie<TagValue[]>> {
     this.len = 0;
-    this.tags = this.reader.readTags().then((tags) => {
-      const tr = new trie<Tag[]>();
-      tags.forEach((tag) => {
+    this.tags = new Promise<trie<TagValue[]>>((resolve, reject) => {
+      const tr = new trie<TagValue[]>();
+      this.reader.on('tag', (tag: Tag) => {
+        const tagValue = {
+          filename: path.basename(tag.path),
+          dir: Symbol.for(path.dirname(tag.path)),
+          pattern: tag.pattern
+        };
         const indexed = tr.get(tag.name);
         if (!indexed) {
-          tr.insert(tag.name, [tag]);
+          tr.insert(tag.name, [tagValue]);
         } else {
-          indexed.push(tag);
+          indexed.push(tagValue);
         }
+        this.len += 1;
       });
-      this.len = tags.length;
-      return tr;
+      this.reader.on('end', () => {
+        this.reader.removeAllListeners();
+        resolve(tr);
+      });
+      this.reader.readTags();
     });
     return this.tags;
   }
@@ -141,17 +130,38 @@ export class CTagsIndex {
     return Promise.all<Match>(matches.map(this.resolveMatch.bind(this)));
   }
 
-  private resolveMatch(tag: Tag): Promise<Match> {
-    const filename = path.join(this.baseDir, tag.path);
-    if (!isNullOrUndefined(tag.lineno)) {
-      return Promise.resolve({ lineno: tag.lineno, path: filename });
+  private parsePattern(token: string): RegExp | number | null {
+    if (token.startsWith('/^') && token.endsWith('/;"')) {
+      // tag pattern is a no-magic pattern with start and possibly end anchors (/^...$/)
+      // http://vimdoc.sourceforge.net/htmldoc/pattern.html#/magic
+      // http://ctags.sourceforge.net/FORMAT
+      const anchoredEol = token.endsWith('$/;"');
+      const end = anchoredEol ? -4 : -3;
+      return new RegExp('^' + regexEscape(token.slice(2, end)) + (anchoredEol ? '$' : ''));
     }
-    return this.findTagInFile(tag, filename);
+    const lineno = parseInt(token, 10);
+    if (!isNaN(lineno)) {
+      return lineno - 1;
+    }
+    return null;
   }
 
-  private findTagInFile(tag: Tag, filename: string): Promise<Match> {
+  private resolveMatch(tag: TagValue): Promise<Match> {
+    const dir = Symbol.keyFor(tag.dir);
+    if (dir === undefined) {
+      return Promise.reject();
+    }
+    const filename = path.join(this.baseDir, path.join(dir, tag.filename));
+    const pattern =  this.parsePattern(tag.pattern);
+    if (typeof(pattern) === 'number') {
+      return Promise.resolve({ lineno: pattern, path: filename });
+    }
+    return this.findTagInFile(pattern, filename);
+  }
+
+  private findTagInFile(pattern: RegExp | null, filename: string): Promise<Match> {
     const match = { lineno: 0, path: filename };
-    if (!tag.pattern) {
+    if (!pattern) {
       return Promise.resolve(match);
     }
     const rs = fs.createReadStream(filename);
@@ -159,7 +169,7 @@ export class CTagsIndex {
     return new Promise<Match>((resolve, reject) => {
       let lineno = 0;
       rl.on('line', line => {
-        if (!!tag.pattern && tag.pattern.test(line)) {
+        if (pattern.test(line)) {
           match.lineno = lineno;
           rl.close();
         }

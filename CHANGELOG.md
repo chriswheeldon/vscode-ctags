@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5]
+
+- Some memory usage enhancements
+    - Create RegExp for pattern on lookup rather than index
+    - Use Symbol registry for directory names (there is probably a more efficient way of doing this)
+    - Don't store symbol name in index
+    - Process tags as they are emitted from the tag reader
+
 ## [0.0.4]
 
 - Destroy fs.ReadStream after resolving match (prevents file handle leaks)
