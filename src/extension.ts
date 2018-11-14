@@ -1,10 +1,10 @@
-'use strict';
-import * as child_process from 'child_process';
-import * as vscode from 'vscode';
-import * as ctags from './ctags';
-import * as util from './util';
+"use strict";
+import * as child_process from "child_process";
+import * as vscode from "vscode";
+import * as ctags from "./ctags";
+import * as util from "./util";
 
-const tagsfile = 'tags';
+const tagsfile = "tags";
 let ctagsIndex: ctags.CTagsIndex;
 
 class CTagsDefinitionProvider implements vscode.DefinitionProvider {
@@ -36,20 +36,17 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
 function reindexTagsWithProgress(
   progress: vscode.Progress<{ message?: string; increment?: number }>
 ): Promise<void> {
-  progress.report({ increment: 0, message: 'Indexing CTags' });
+  progress.report({ increment: 0, message: "Indexing CTags" });
   return ctagsIndex
     .reindex()
-    .then(tags => {
+    .then(() => {
       progress.report({ increment: 100 });
-      vscode.window.setStatusBarMessage(
-        `Indexing CTags complete. Indexed ${ctagsIndex.length} tags.`,
-        3000
-      );
+      vscode.window.setStatusBarMessage(`Indexing CTags complete`, 3000);
     })
     .catch((reason: any) => {
       progress.report({ increment: 100 });
       vscode.window.setStatusBarMessage(
-        `Failed to index CTags. ${reason}.`,
+        `Failed to index CTags: ${reason}.`,
         3000
       );
     });
@@ -87,36 +84,38 @@ function regenerateCTags() {
     },
     (progress, token) => {
       progress.report({ increment: 0 });
-      return execCTags().then(reindexTagsWithProgress.bind(null, progress));
+      return execCTags().then(() => {
+        reindexTagsWithProgress.bind(null, progress);
+      });
     }
   );
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  util.log('CTags extension active');
+  util.log("CTags extension active");
 
-  ctagsIndex = new ctags.CTagsIndex(vscode.workspace.rootPath || '', tagsfile);
+  ctagsIndex = new ctags.CTagsIndex(vscode.workspace.rootPath || "", tagsfile);
   reindexTags();
 
   const definitionsProvider = new CTagsDefinitionProvider();
   vscode.languages.registerDefinitionProvider(
-    { scheme: 'file', language: 'cpp' },
+    { scheme: "file", language: "cpp" },
     definitionsProvider
   );
   vscode.languages.registerDefinitionProvider(
-    { scheme: 'file', language: 'c' },
+    { scheme: "file", language: "c" },
     definitionsProvider
   );
 
   const reloadCTagsCommand = vscode.commands.registerCommand(
-    'extension.reloadCTags',
+    "extension.reloadCTags",
     () => {
       reindexTags();
     }
   );
 
   const regenerateCTagsCommand = vscode.commands.registerCommand(
-    'extension.regenerateCTags',
+    "extension.regenerateCTags",
     () => {
       regenerateCTags();
     }
