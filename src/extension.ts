@@ -15,20 +15,26 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
   ): vscode.ProviderResult<vscode.Definition> {
     return new Promise((resolve, reject) => {
       const query = document.getText(document.getWordRangeAtPosition(position));
-      ctagsIndex.lookup(query).then(matches => {
-        if (!matches) {
-          util.log(`"${query}" has no matches`);
-          return reject();
-        }
-        const locations = matches.map(match => {
-          util.log(`"${query}" matches ${match.path}:${match.lineno}`);
-          return new vscode.Location(
-            vscode.Uri.file(match.path),
-            new vscode.Position(match.lineno, 0)
-          );
+      ctagsIndex
+        .lookup(query)
+        .then(matches => {
+          if (!matches) {
+            util.log(`"${query}" has no matches`);
+            return reject();
+          }
+          const locations = matches.map(match => {
+            util.log(`"${query}" matches ${match.path}:${match.lineno}`);
+            return new vscode.Location(
+              vscode.Uri.file(match.path),
+              new vscode.Position(match.lineno, 0)
+            );
+          });
+          resolve(locations);
+        })
+        .catch(error => {
+          util.log(`"${query}" lookup failed: ${error}`);
+          reject();
         });
-        resolve(locations);
-      });
     });
   }
 }
