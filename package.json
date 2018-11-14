@@ -53,6 +53,6 @@
   },
   "icon": "images/icon.png",
   "dependencies": {
-    "textindexer": "0.0.3"
+    "textindexer": "0.0.5"
   }
 }

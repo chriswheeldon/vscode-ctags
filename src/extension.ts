@@ -90,9 +90,7 @@ function regenerateCTags() {
     },
     (progress, token) => {
       progress.report({ increment: 0 });
-      return execCTags().then(() => {
-        reindexTagsWithProgress.bind(null, progress);
-      });
+      return execCTags().then(reindexTagsWithProgress.bind(null, progress));
     }
   );
 }
