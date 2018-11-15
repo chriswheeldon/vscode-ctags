@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.7]
+
+- Import latest TextIndexer version (line ending agnostic)
+
 ## [0.0.6]
 
 - Reimplemented in terms of TextIndexer, this provides a better balance between lookup performance and memory usage.

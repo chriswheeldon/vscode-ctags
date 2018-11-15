@@ -34,7 +34,10 @@ export class CTagsIndex {
     this.filename = filename;
     this.indexer = new TextIndexer(
       path.join(this.baseDir, filename),
-      line => line.split("\t")[0],
+      line => {
+        const ti = line.indexOf("\t");
+        return ti !== -1 ? line.slice(0, ti) : line;
+      },
       7
     );
     this.index = Promise.resolve({ start: 0, end: 0, children: {} });
