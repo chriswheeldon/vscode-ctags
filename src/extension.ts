@@ -1,10 +1,11 @@
-"use strict";
-import * as child_process from "child_process";
-import * as vscode from "vscode";
-import * as ctags from "./ctags";
-import * as util from "./util";
+'use strict';
+import * as child_process from 'child_process';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import * as ctags from './ctags';
+import * as util from './util';
 
-const tagsfile = "tags";
+const tagsfile = 'tags';
 let ctagsIndex: ctags.CTagsIndex;
 
 class CTagsDefinitionProvider implements vscode.DefinitionProvider {
@@ -39,10 +40,44 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
   }
 }
 
+class CTagsHoverProvider implements vscode.HoverProvider {
+  public provideHover(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken
+  ): vscode.ProviderResult<vscode.Hover> {
+    return new Promise((resolve, reject) => {
+      const query = document.getText(document.getWordRangeAtPosition(position));
+      ctagsIndex
+        .lookup(query)
+        .then(matches => {
+          if (!matches) {
+            util.log(`"${query}" has no matches`);
+            return reject();
+          }
+          const summary = matches.map(match => {
+            return (
+              path.relative(vscode.workspace.rootPath || '', match.path) +
+              ':' +
+              match.lineno
+            );
+          });
+          resolve(
+            new vscode.Hover(new vscode.MarkdownString(summary.join('  \n')))
+          );
+        })
+        .catch(error => {
+          util.log(`"${query}" lookup failed: ${error}`);
+          reject();
+        });
+    });
+  }
+}
+
 function reindexTagsWithProgress(
   progress: vscode.Progress<{ message?: string; increment?: number }>
 ): Promise<void> {
-  progress.report({ increment: 0, message: "Indexing CTags" });
+  progress.report({ increment: 0, message: 'Indexing CTags' });
   return ctagsIndex
     .reindex()
     .then(() => {
@@ -96,30 +131,40 @@ function regenerateCTags() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  util.log("CTags extension active");
+  util.log('CTags extension active');
 
-  ctagsIndex = new ctags.CTagsIndex(vscode.workspace.rootPath || "", tagsfile);
+  ctagsIndex = new ctags.CTagsIndex(vscode.workspace.rootPath || '', tagsfile);
   reindexTags();
 
   const definitionsProvider = new CTagsDefinitionProvider();
   vscode.languages.registerDefinitionProvider(
-    { scheme: "file", language: "cpp" },
+    { scheme: 'file', language: 'cpp' },
     definitionsProvider
   );
   vscode.languages.registerDefinitionProvider(
-    { scheme: "file", language: "c" },
+    { scheme: 'file', language: 'c' },
     definitionsProvider
   );
 
+  const hoverProvider = new CTagsHoverProvider();
+  vscode.languages.registerHoverProvider(
+    { scheme: 'file', language: 'c' },
+    hoverProvider
+  );
+  vscode.languages.registerHoverProvider(
+    { scheme: 'file', language: 'cpp' },
+    hoverProvider
+  );
+
   const reloadCTagsCommand = vscode.commands.registerCommand(
-    "extension.reloadCTags",
+    'extension.reloadCTags',
     () => {
       reindexTags();
     }
   );
 
   const regenerateCTagsCommand = vscode.commands.registerCommand(
-    "extension.regenerateCTags",
+    'extension.regenerateCTags',
     () => {
       regenerateCTags();
     }

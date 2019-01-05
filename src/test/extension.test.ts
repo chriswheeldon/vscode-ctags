@@ -12,12 +12,11 @@ import { CTagsIndex } from '../ctags';
 // import * as myExtension from '../extension';
 
 // Defines a Mocha test suite to group tests of similar kind together
-suite("Extension Tests", function () {
-
-    // Defines a Mocha unit test
-    test("integration", async function() {
-        this.timeout(10000e3);
-        const index = new CTagsIndex("/home/chris/dev/linux/", "tags");
-        return index.reindex();
-    });
+suite('Extension Tests', function() {
+  // Defines a Mocha unit test
+  test('integration', async function() {
+    this.timeout(10000e3);
+    const index = new CTagsIndex('/home/chris/dev/linux/', 'tags');
+    return index.reindex();
+  });
 });

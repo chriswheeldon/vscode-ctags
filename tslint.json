@@ -7,7 +7,7 @@
     "curly": true,
     "class-name": true,
     "semicolon": [true, "always"],
-    "quotemark": [true, "double"],
+    "quotemark": [true, "single"],
     "triple-equals": true,
     "no-console": false,
     "max-classes-per-file": false,
