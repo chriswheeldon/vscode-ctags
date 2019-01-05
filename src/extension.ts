@@ -14,28 +14,22 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.Definition> {
-    return new Promise((resolve, reject) => {
-      const query = document.getText(document.getWordRangeAtPosition(position));
-      ctagsIndex
-        .lookup(query)
-        .then(matches => {
-          if (!matches) {
-            util.log(`"${query}" has no matches`);
-            return reject();
-          }
-          const locations = matches.map(match => {
-            util.log(`"${query}" matches ${match.path}:${match.lineno}`);
-            return new vscode.Location(
-              vscode.Uri.file(match.path),
-              new vscode.Position(match.lineno, 0)
-            );
-          });
-          resolve(locations);
-        })
-        .catch(error => {
-          util.log(`"${query}" lookup failed: ${error}`);
-          reject();
-        });
+    const query = document.getText(document.getWordRangeAtPosition(position));
+    return this.resolveDefinitions(query);
+  }
+
+  private async resolveDefinitions(query: string): Promise<vscode.Definition> {
+    const matches = await ctagsIndex.lookup(query);
+    if (!matches) {
+      util.log(`"${query}" has no matches`);
+      return [];
+    }
+    return matches.map(match => {
+      util.log(`"${query}" matches ${match.path}:${match.lineno}`);
+      return new vscode.Location(
+        vscode.Uri.file(match.path),
+        new vscode.Position(match.lineno, 0)
+      );
     });
   }
 }
@@ -46,31 +40,24 @@ class CTagsHoverProvider implements vscode.HoverProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.Hover> {
-    return new Promise((resolve, reject) => {
-      const query = document.getText(document.getWordRangeAtPosition(position));
-      ctagsIndex
-        .lookup(query)
-        .then(matches => {
-          if (!matches) {
-            util.log(`"${query}" has no matches`);
-            return reject();
-          }
-          const summary = matches.map(match => {
-            return (
-              path.relative(vscode.workspace.rootPath || '', match.path) +
-              ':' +
-              match.lineno
-            );
-          });
-          resolve(
-            new vscode.Hover(new vscode.MarkdownString(summary.join('  \n')))
-          );
-        })
-        .catch(error => {
-          util.log(`"${query}" lookup failed: ${error}`);
-          reject();
-        });
+    const query = document.getText(document.getWordRangeAtPosition(position));
+    return this.resolveHover(query);
+  }
+
+  private async resolveHover(query: string): Promise<vscode.Hover | null> {
+    const matches = await ctagsIndex.lookup(query);
+    if (!matches) {
+      util.log(`"${query}" has no matches`);
+      return null;
+    }
+    const summary = matches.map(match => {
+      return (
+        path.relative(vscode.workspace.rootPath || '', match.path) +
+        ':' +
+        match.lineno
+      );
     });
+    return new vscode.Hover(new vscode.MarkdownString(summary.join('  \n')));
   }
 }
 
