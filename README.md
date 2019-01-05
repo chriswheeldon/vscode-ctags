@@ -5,6 +5,7 @@ A CTags definitions provider for VSCode.
 ## Features
 
 - Registers with VSCode as a definitions provider for C/C++ files.
+- Provides symbol autocompletion from tags file.
 - Provides fast lookup even on large tags files.
 - Handles symbols with multiple definitions.
 - Provides commands for regenerating and reindexing the tags file.
@@ -24,4 +25,4 @@ in the workspace root directory recursively (equivalent to running: `ctags -R -f
 
 ## Release Notes
 
-_Unreleased_
+See [CHANGELOG](CHANGELOG.md).

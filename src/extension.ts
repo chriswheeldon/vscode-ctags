@@ -72,13 +72,15 @@ class CTagsCompletionProvider implements vscode.CompletionItemProvider {
     return this.resolveCompletion(prefix);
   }
 
-  private async resolveCompletion(prefix: string): Promise<vscode.CompletionItem[] | null> {
+  private async resolveCompletion(
+    prefix: string
+  ): Promise<vscode.CompletionItem[] | null> {
     const matches = await ctagsIndex.lookupCompletions(prefix);
     if (!matches) {
       util.log(`"${prefix}" has no matches`);
       return null;
     }
-    return matches.map((match) => {
+    return matches.map(match => {
       return new vscode.CompletionItem(match.name);
     });
   }
@@ -168,8 +170,14 @@ export function activate(context: vscode.ExtensionContext) {
 
   const completionProvider = new CTagsCompletionProvider();
   vscode.languages.registerCompletionItemProvider(
-      {scheme: 'file', language: 'c'},
-      completionProvider);
+    { scheme: 'file', language: 'c' },
+    completionProvider
+  );
+
+  vscode.languages.registerCompletionItemProvider(
+    { scheme: 'file', language: 'cpp' },
+    completionProvider
+  );
 
   const reloadCTagsCommand = vscode.commands.registerCommand(
     'extension.reloadCTags',
