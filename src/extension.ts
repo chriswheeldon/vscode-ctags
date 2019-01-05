@@ -61,6 +61,29 @@ class CTagsHoverProvider implements vscode.HoverProvider {
   }
 }
 
+class CTagsCompletionProvider implements vscode.CompletionItemProvider {
+  public provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
+    context: vscode.CompletionContext
+  ): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
+    const prefix = document.getText(document.getWordRangeAtPosition(position));
+    return this.resolveCompletion(prefix);
+  }
+
+  private async resolveCompletion(prefix: string): Promise<vscode.CompletionItem[] | null> {
+    const matches = await ctagsIndex.lookupCompletions(prefix);
+    if (!matches) {
+      util.log(`"${prefix}" has no matches`);
+      return null;
+    }
+    return matches.map((match) => {
+      return new vscode.CompletionItem(match.name);
+    });
+  }
+}
+
 function reindexTagsWithProgress(
   progress: vscode.Progress<{ message?: string; increment?: number }>
 ): Promise<void> {
@@ -142,6 +165,11 @@ export function activate(context: vscode.ExtensionContext) {
     { scheme: 'file', language: 'cpp' },
     hoverProvider
   );
+
+  const completionProvider = new CTagsCompletionProvider();
+  vscode.languages.registerCompletionItemProvider(
+      {scheme: 'file', language: 'c'},
+      completionProvider);
 
   const reloadCTagsCommand = vscode.commands.registerCommand(
     'extension.reloadCTags',

@@ -12,13 +12,14 @@ function regexEscape(s: string): string {
   return s.replace(/[-^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-interface Tag {
+export interface Tag {
   name: string;
   path: string;
   pattern: string;
 }
 
 export interface Match {
+  symbol: string;
   path: string;
   lineno: number;
 }
@@ -49,12 +50,34 @@ export class CTagsIndex {
   }
 
   public async lookup(symbol: string): Promise<Match[] | null> {
+    const candidates = await this.lookupRange(symbol);
+    if (candidates) {
+      const matches = candidates.filter((candidate) => {
+        return candidate.name === symbol;
+      });
+      return Promise.all<Match>(matches.map(this.resolveMatch.bind(this)));
+    }
+    return null;
+  }
+
+  public async lookupCompletions(prefix: string): Promise<Tag[] | null> {
+    const candidates = await this.lookupRange(prefix);
+    if (candidates) {
+      const matches = candidates.filter((candidate) => {
+        return candidate.name.startsWith(prefix);
+      });
+      return matches;
+    }
+    return null;
+  }
+
+  private async lookupRange(symbol: string): Promise<Tag[] | null> {
     await this.index;
     const matchedRange = await this.indexer.lookup(symbol);
     if (!matchedRange) {
       return Promise.resolve(null);
     }
-    const matches: Tag[] = [];
+    const tags: Tag[] = [];
     const rs = fs.createReadStream(path.join(this.baseDir, this.filename), {
       start: matchedRange.start,
       end: matchedRange.end
@@ -62,18 +85,16 @@ export class CTagsIndex {
     const lr = readline.createInterface(rs);
     lr.on('line', line => {
       const tokens = line.split('\t');
-      if (tokens[0] === symbol) {
-        matches.push({
-          name: symbol,
+        tags.push({
+          name: tokens[0],
           path: tokens[1],
           pattern: tokens[2]
         });
-      }
     });
-    return new Promise<Match[]>((resolve, reject) => {
+    return new Promise<Tag[]>((resolve, reject) => {
       lr.on('close', () => {
         rs.destroy();
-        resolve(Promise.all<Match>(matches.map(this.resolveMatch.bind(this))));
+        resolve(tags);
       });
       rs.on('error', () => {
         rs.destroy();
@@ -104,18 +125,20 @@ export class CTagsIndex {
     const pattern = this.parsePattern(tag.pattern);
     if (typeof pattern === 'number') {
       return Promise.resolve({
+        symbol: tag.name,
         lineno: pattern,
         path: path.join(this.baseDir, tag.path)
       });
     }
-    return this.findTagInFile(pattern, path.join(this.baseDir, tag.path));
+    return this.findTagInFile(tag.name, pattern, path.join(this.baseDir, tag.path));
   }
 
   private findTagInFile(
+    symbol: string,
     pattern: RegExp | null,
     filename: string
   ): Promise<Match> {
-    const match = { lineno: 0, path: filename };
+    const match = { symbol, lineno: 0, path: filename };
     if (!pattern) {
       return Promise.resolve(match);
     }
