@@ -63,8 +63,13 @@ export class CTagsIndex {
   public async lookupCompletions(prefix: string): Promise<Tag[] | null> {
     const candidates = await this.lookupRange(prefix);
     if (candidates) {
+      const found = new Set();
       const matches = candidates.filter((candidate) => {
-        return candidate.name.startsWith(prefix);
+        if (candidate.name.startsWith(prefix) && !found.has(candidate.name)) {
+          found.add(candidate.name);
+          return true;
+        }
+        return false;
       });
       return matches;
     }
