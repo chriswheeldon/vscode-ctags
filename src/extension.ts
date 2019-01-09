@@ -118,7 +118,16 @@ function reindexTags() {
 
 function execCTags(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const cmd = `ctags -R -f ${tagsfile} .`;
+    const config = vscode.workspace.getConfiguration('ctags');
+    const excludes = (config.get<[]>('excludePatterns') || [])
+      .map((pattern: string) => {
+        return '--exclude=' + pattern;
+      })
+      .join(' ');
+    const languages =
+      '--languages=' + (config.get<[]>('languages') || ['all']).join(',');
+    const cmd = `ctags -R -f ${tagsfile} ${excludes} ${languages} .`;
+    util.log('ctags cmd', cmd);
     child_process.exec(
       cmd,
       { cwd: vscode.workspace.rootPath },

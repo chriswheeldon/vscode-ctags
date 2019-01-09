@@ -2,7 +2,7 @@
   "name": "exuberant-ctags",
   "displayName": "Exuberant CTags",
   "description": "Exuberant CTags support for VS Code",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "publisher": "chriswheeldon",
   "engines": {
     "vscode": "^1.23.0"
@@ -31,7 +31,22 @@
         "command": "extension.regenerateCTags",
         "title": "Ctags Support: regenerate tags file"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Exuberant CTags",
+      "properties": {
+        "ctags.excludePatterns": {
+          "type": "array",
+          "items": "string",
+          "markdownDescription": "An array of file and directory exclude patterns to be considered when (re)generating tags. Each pattern is passed to ctags as --exclude=_pattern_."
+        },
+        "ctags.languages": {
+          "type": "array",
+          "items": "string",
+          "markdownDescription": "An array of languages to be considered when (re)generating tags. The languages are passed to ctags as --languages=_lang1_,_lang2_. See ctags --list-languages for valid values."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.9]
+
+- Added configuration options for exclude patterns and languages
+
 ## [0.0.8]
 
 - Very basic hover and completion providers
