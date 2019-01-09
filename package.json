@@ -43,7 +43,10 @@
         "ctags.languages": {
           "type": "array",
           "items": "string",
-          "markdownDescription": "An array of languages to be considered when (re)generating tags. The languages are passed to ctags as --languages=_lang1_,_lang2_. See ctags --list-languages for valid values."
+          "markdownDescription": "An array of languages to be considered when (re)generating tags. The languages are passed to ctags as --languages=_lang1_,_lang2_. See ctags --list-languages for valid values.",
+          "default": [
+            "all"
+          ]
         }
       }
     }

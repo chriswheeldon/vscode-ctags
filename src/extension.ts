@@ -116,20 +116,11 @@ function reindexTags() {
   );
 }
 
-function execCTags(): Promise<void> {
+function execCTags(command: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const config = vscode.workspace.getConfiguration('ctags');
-    const excludes = (config.get<[]>('excludePatterns') || [])
-      .map((pattern: string) => {
-        return '--exclude=' + pattern;
-      })
-      .join(' ');
-    const languages =
-      '--languages=' + (config.get<[]>('languages') || ['all']).join(',');
-    const cmd = `ctags -R -f ${tagsfile} ${excludes} ${languages} .`;
-    util.log('ctags cmd', cmd);
+    util.log('ctags cmd', command);
     child_process.exec(
-      cmd,
+      command,
       { cwd: vscode.workspace.rootPath },
       (err, stdout, stderr) => {
         resolve();
@@ -139,14 +130,27 @@ function execCTags(): Promise<void> {
 }
 
 function regenerateCTags() {
+  const config = vscode.workspace.getConfiguration('ctags');
+  const excludes = config
+    .get<string[]>('excludePatterns', [])
+    .map((pattern: string) => {
+      return '--exclude=' + pattern;
+    })
+    .join(' ');
+  const languages =
+    '--languages=' + config.get<string[]>('languages', ['all']).join(',');
+  const command = `ctags -R -f ${tagsfile} ${excludes} ${languages} .`;
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Window,
-      title: `Regenerating CTags (ctags -R -f ${tagsfile} .)`
+      title: `Regenerating CTags (${command})`
     },
     (progress, token) => {
       progress.report({ increment: 0 });
-      return execCTags().then(reindexTagsWithProgress.bind(null, progress));
+
+      return execCTags(command).then(
+        reindexTagsWithProgress.bind(null, progress)
+      );
     }
   );
 }
