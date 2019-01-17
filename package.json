@@ -47,6 +47,11 @@
           "default": [
             "all"
           ]
+        },
+        "ctags.regenerateOnSave": {
+          "type": "boolean",
+          "markdownDescription": "If true, then ctags will be regenerated and reindexed on save.",
+          "default": false
         }
       }
     }

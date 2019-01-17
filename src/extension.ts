@@ -123,6 +123,7 @@ function execCTags(command: string): Promise<void> {
       command,
       { cwd: vscode.workspace.rootPath },
       (err, stdout, stderr) => {
+        util.log('ctags complete', (err && err.message) || '');
         resolve();
       }
     );
@@ -208,6 +209,15 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(reloadCTagsCommand);
   context.subscriptions.push(regenerateCTagsCommand);
+
+  vscode.workspace.onDidSaveTextDocument(event => {
+    util.log('saved', event.fileName, event.languageId);
+    const config = vscode.workspace.getConfiguration('ctags');
+    const autoRegenerate = config.get<boolean>('regenerateOnSave');
+    if (autoRegenerate) {
+      regenerateCTags();
+    }
+  });
 }
 
 export function deactivate() {}
