@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.10]
+
+- Rudimentary support for regenerating tags on save
+
 ## [0.0.9]
 
 - Added configuration options for exclude patterns and languages
