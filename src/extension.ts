@@ -2,7 +2,7 @@
 import * as child_process from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as ctags from './ctags';
+import * as ctags from './ctagsindex';
 import * as util from './util';
 
 const tagsfile = 'tags';
@@ -91,7 +91,7 @@ function reindexTagsWithProgress(
 ): Promise<void> {
   progress.report({ increment: 0, message: 'Indexing CTags' });
   return ctagsIndex
-    .reindex()
+    .build()
     .then(() => {
       progress.report({ increment: 100 });
       vscode.window.setStatusBarMessage(`Indexing CTags complete`, 3000);

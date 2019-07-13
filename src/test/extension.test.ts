@@ -4,7 +4,7 @@
 //
 
 // The module 'assert' provides assertion methods from node
-import { CTagsIndex } from '../ctags';
+import { CTagsIndex } from '../ctagsindex';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
@@ -17,6 +17,6 @@ suite('Extension Tests', function() {
   test('integration', async function() {
     this.timeout(10000e3);
     const index = new CTagsIndex('/home/chris/dev/linux/', 'tags');
-    return index.reindex();
+    return index.build();
   });
 });
