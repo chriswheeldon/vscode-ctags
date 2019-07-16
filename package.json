@@ -72,7 +72,7 @@
   },
   "icon": "images/icon.png",
   "dependencies": {
-    "textindexer": "0.0.6"
+    "textindexer": "0.0.7"
   },
   "license": "MIT"
 }
