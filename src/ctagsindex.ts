@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
-import { TextIndex, TextIndexer } from 'textindexer';
+import { TextIndexer } from 'textindexer';
 import * as util from './util';
 
 function regexEscape(s: string): string {
