@@ -61,11 +61,11 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.42",
-    "@types/node": "^7.0.69",
-    "tslint": "^5.11.0",
-    "tslint-config-prettier": "^1.15.0",
+    "@types/node": "^7.10.6",
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "^2.9.2",
-    "vscode": "^1.1.21"
+    "vscode": "^1.1.35"
   },
   "prettier": {
     "singleQuote": true
@@ -73,5 +73,6 @@
   "icon": "images/icon.png",
   "dependencies": {
     "textindexer": "0.0.6"
-  }
+  },
+  "license": "MIT"
 }
