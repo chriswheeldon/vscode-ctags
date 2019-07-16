@@ -1,5 +1,4 @@
 'use strict';
-import * as child_process from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ctags from './ctags';
@@ -21,7 +20,7 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
   private async resolveDefinitions(query: string): Promise<vscode.Definition> {
     const matches = await tags.lookup(query);
     if (!matches) {
-      util.log(`"${query}" has no matches`);
+      util.log(`"${query}" has no matches.`);
       return [];
     }
     return matches.map(match => {
@@ -47,7 +46,7 @@ class CTagsHoverProvider implements vscode.HoverProvider {
   private async resolveHover(query: string): Promise<vscode.Hover | null> {
     const matches = await tags.lookup(query);
     if (!matches) {
-      util.log(`"${query}" has no matches`);
+      util.log(`"${query}" has no matches.`);
       return null;
     }
     const summary = matches.map(match => {
@@ -77,7 +76,7 @@ class CTagsCompletionProvider implements vscode.CompletionItemProvider {
   ): Promise<vscode.CompletionItem[] | null> {
     const matches = await tags.lookupCompletions(prefix);
     if (!matches) {
-      util.log(`"${prefix}" has no matches`);
+      util.log(`"${prefix}" has no matches.`);
       return null;
     }
     return matches.map(match => {
@@ -100,7 +99,7 @@ function regenerateCTags() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  util.log('CTags extension active');
+  util.log('extension activated.');
 
   tags = new ctags.CTags(vscode.workspace.rootPath || '', tagsfile);
 

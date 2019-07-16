@@ -28,7 +28,6 @@ export class CTagsIndex {
   private baseDir: string;
   private filename: string;
   private indexer: TextIndexer;
-  private index: Promise<TextIndex>;
 
   constructor(baseDir: string, filename: string) {
     this.baseDir = baseDir;
@@ -41,13 +40,10 @@ export class CTagsIndex {
       },
       7
     );
-    this.index = Promise.resolve({ start: 0, end: 0, children: {} });
   }
 
-  public async build(): Promise<CTagsIndex> {
-    this.index = this.indexer.index();
-    await this.index;
-    return this;
+  public async build(): Promise<void> {
+    await this.indexer.index();
   }
 
   public async lookup(symbol: string): Promise<Match[] | null> {
@@ -78,7 +74,6 @@ export class CTagsIndex {
   }
 
   private async lookupRange(symbol: string): Promise<Tag[] | null> {
-    await this.index;
     const matchedRange = await this.indexer.lookup(symbol);
     if (!matchedRange) {
       return Promise.resolve(null);

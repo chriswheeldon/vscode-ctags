@@ -20,24 +20,26 @@ export class CTags {
   }
 
   public async regenerate(args?: string[]): Promise<void> {
-    log('Enqueing regenerate ctags task.');
-    await this.tasks.append(() => {
-      return this.regenerateFile(args);
-    });
+    log('enqueing regenerate ctags task.');
     await this.tasks.append(async () => {
+      await this.regenerateFile(args);
+      log('regenerated ctags.');
       await this.swapTagFile();
+      log('installed tags.');
       await this.index.build();
-      log('Regenerated ctags.');
-    }, true);
+      log('indexed tags.');
+    });
   }
 
   public async lookup(symbol: string): Promise<Match[] | null> {
+    log(`enqueing lookup: "${symbol}".`);
     return this.tasks.append(() => {
       return this.index.lookup(symbol);
     });
   }
 
   public async lookupCompletions(prefix: string): Promise<Tag[] | null> {
+    log(`enqueing lookup completions: "${prefix}".`);
     return this.tasks.append(() => {
       return this.index.lookupCompletions(prefix);
     });
