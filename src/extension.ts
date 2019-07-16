@@ -49,6 +49,7 @@ class CTagsHoverProvider implements vscode.HoverProvider {
       util.log(`"${query}" has no matches.`);
       return null;
     }
+    util.log(`"${query}" has ${matches.length} matches.`);
     const summary = matches.map(match => {
       return (
         path.relative(vscode.workspace.rootPath || '', match.path) +
@@ -79,6 +80,7 @@ class CTagsCompletionProvider implements vscode.CompletionItemProvider {
       util.log(`"${prefix}" has no matches.`);
       return null;
     }
+    util.log(`"${prefix}" has ${matches.length} matches.`);
     return matches.map(match => {
       return new vscode.CompletionItem(match.name);
     });
