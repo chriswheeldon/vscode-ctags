@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.11]
+
+- Queue lookup and regenerate operations such that they do not interfere with each other
+- Maintain existing index when regenerating such that tag lookup can still occur
+  - Switch to new index when lookup queue is idle
+
 ## [0.0.10]
 
 - Rudimentary support for regenerating tags on save

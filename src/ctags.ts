@@ -1,6 +1,6 @@
 'use strict';
 import * as child_process from 'child_process';
-import { rename } from 'fs';
+import { rename, stat, Stats } from 'fs';
 import * as path from 'path';
 import { CTagsIndex, Match, Tag } from './ctagsindex';
 import { TaskQueue } from './taskqueue';
@@ -10,37 +10,52 @@ export class CTags {
   private baseDir: string;
   private filename: string;
   private index: CTagsIndex;
-  private tasks: TaskQueue;
+  private indexq: TaskQueue;
+  private fileq: TaskQueue;
 
   constructor(baseDir: string, filename: string) {
     this.baseDir = baseDir;
     this.filename = filename;
     this.index = new CTagsIndex(this.baseDir, this.filename);
-    this.tasks = new TaskQueue();
+    this.indexq = new TaskQueue();
+    this.fileq = new TaskQueue();
+  }
+
+  public async reindex() {
+    await this.fileq.append(async () => {
+      await this.statAsync(path.join(this.baseDir, this.filename));
+      log('found existing tags file.');
+      await this.indexq.append(async () => {
+        await this.index.build();
+        log('indexed tags.');
+      }, true);
+    });
   }
 
   public async regenerate(args?: string[]): Promise<void> {
     log('enqueing regenerate ctags task.');
-    await this.tasks.append(async () => {
+    await this.fileq.append(async () => {
       await this.regenerateFile(args);
       log('regenerated ctags.');
-      await this.swapTagFile();
-      log('installed tags.');
-      await this.index.build();
-      log('indexed tags.');
+      await this.indexq.append(async () => {
+        await this.swapTagFile();
+        log('installed tags.');
+        await this.index.build();
+        log('indexed tags.');
+      }, true);
     });
   }
 
   public async lookup(symbol: string): Promise<Match[] | null> {
     log(`enqueing lookup: "${symbol}".`);
-    return this.tasks.append(() => {
+    return this.indexq.append(() => {
       return this.index.lookup(symbol);
     });
   }
 
   public async lookupCompletions(prefix: string): Promise<Tag[] | null> {
     log(`enqueing lookup completions: "${prefix}".`);
-    return this.tasks.append(() => {
+    return this.indexq.append(() => {
       return this.index.lookupCompletions(prefix);
     });
   }
@@ -77,6 +92,18 @@ export class CTags {
           resolve();
         }
       );
+    });
+  }
+
+  private statAsync(filename: string): Promise<Stats> {
+    return new Promise<Stats>((resolve, reject) => {
+      stat(filename, (err, stats) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(stats);
+        }
+      });
     });
   }
 }

@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as ctags from './ctags';
 import * as util from './util';
 
-const tagsfile = 'tags';
+const tagsfile = '.vscode-ctags';
 let tags: ctags.CTags;
 
 class CTagsDefinitionProvider implements vscode.DefinitionProvider {
@@ -85,7 +85,7 @@ class CTagsCompletionProvider implements vscode.CompletionItemProvider {
   }
 }
 
-function regenerateCTags() {
+function regenerateArgs(): string[] {
   const config = vscode.workspace.getConfiguration('ctags');
   const excludes = config
     .get<string[]>('excludePatterns', [])
@@ -95,13 +95,38 @@ function regenerateCTags() {
     .join(' ');
   const languages =
     '--languages=' + config.get<string[]>('languages', ['all']).join(',');
-  tags.regenerate([languages, excludes]);
+  return [languages, excludes];
+}
+
+function regenerateCTags() {
+  const args = regenerateArgs();
+  const title =
+    args && args.length
+      ? `Generating CTags index (${args.join(' ')})`
+      : 'Generating CTags index';
+  vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Window,
+      title
+    },
+    async (progress, token) => {
+      await tags.regenerate(regenerateArgs());
+    }
+  );
 }
 
 export function activate(context: vscode.ExtensionContext) {
   util.log('extension activated.');
 
   tags = new ctags.CTags(vscode.workspace.rootPath || '', tagsfile);
+  tags
+    .reindex()
+    .then(() => {
+      vscode.window.setStatusBarMessage('CTags index loaded', 2000);
+    })
+    .catch(() => {
+      regenerateCTags();
+    });
 
   const definitionsProvider = new CTagsDefinitionProvider();
   vscode.languages.registerDefinitionProvider(
