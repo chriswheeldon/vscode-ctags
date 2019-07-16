@@ -2,11 +2,11 @@
 import * as child_process from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as ctags from './ctagsindex';
+import * as ctags from './ctags';
 import * as util from './util';
 
 const tagsfile = 'tags';
-let ctagsIndex: ctags.CTagsIndex;
+let tags: ctags.CTags;
 
 class CTagsDefinitionProvider implements vscode.DefinitionProvider {
   public provideDefinition(
@@ -19,7 +19,7 @@ class CTagsDefinitionProvider implements vscode.DefinitionProvider {
   }
 
   private async resolveDefinitions(query: string): Promise<vscode.Definition> {
-    const matches = await ctagsIndex.lookup(query);
+    const matches = await tags.lookup(query);
     if (!matches) {
       util.log(`"${query}" has no matches`);
       return [];
@@ -45,7 +45,7 @@ class CTagsHoverProvider implements vscode.HoverProvider {
   }
 
   private async resolveHover(query: string): Promise<vscode.Hover | null> {
-    const matches = await ctagsIndex.lookup(query);
+    const matches = await tags.lookup(query);
     if (!matches) {
       util.log(`"${query}" has no matches`);
       return null;
@@ -75,7 +75,7 @@ class CTagsCompletionProvider implements vscode.CompletionItemProvider {
   private async resolveCompletion(
     prefix: string
   ): Promise<vscode.CompletionItem[] | null> {
-    const matches = await ctagsIndex.lookupCompletions(prefix);
+    const matches = await tags.lookupCompletions(prefix);
     if (!matches) {
       util.log(`"${prefix}" has no matches`);
       return null;
@@ -84,50 +84,6 @@ class CTagsCompletionProvider implements vscode.CompletionItemProvider {
       return new vscode.CompletionItem(match.name);
     });
   }
-}
-
-function reindexTagsWithProgress(
-  progress: vscode.Progress<{ message?: string; increment?: number }>
-): Promise<void> {
-  progress.report({ increment: 0, message: 'Indexing CTags' });
-  return ctagsIndex
-    .build()
-    .then(() => {
-      progress.report({ increment: 100 });
-      vscode.window.setStatusBarMessage(`Indexing CTags complete`, 3000);
-    })
-    .catch((reason: any) => {
-      progress.report({ increment: 100 });
-      vscode.window.setStatusBarMessage(
-        `Failed to index CTags: ${reason}.`,
-        3000
-      );
-    });
-}
-
-function reindexTags() {
-  vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Window
-    },
-    (progress, token) => {
-      return reindexTagsWithProgress(progress);
-    }
-  );
-}
-
-function execCTags(command: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    util.log('ctags cmd', command);
-    child_process.exec(
-      command,
-      { cwd: vscode.workspace.rootPath },
-      (err, stdout, stderr) => {
-        util.log('ctags complete', (err && err.message) || '');
-        resolve();
-      }
-    );
-  });
 }
 
 function regenerateCTags() {
@@ -140,27 +96,13 @@ function regenerateCTags() {
     .join(' ');
   const languages =
     '--languages=' + config.get<string[]>('languages', ['all']).join(',');
-  const command = `ctags -R -f ${tagsfile} ${excludes} ${languages} .`;
-  vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Window,
-      title: `Regenerating CTags (${command})`
-    },
-    (progress, token) => {
-      progress.report({ increment: 0 });
-
-      return execCTags(command).then(
-        reindexTagsWithProgress.bind(null, progress)
-      );
-    }
-  );
+  tags.regenerate([languages, excludes]);
 }
 
 export function activate(context: vscode.ExtensionContext) {
   util.log('CTags extension active');
 
-  ctagsIndex = new ctags.CTagsIndex(vscode.workspace.rootPath || '', tagsfile);
-  reindexTags();
+  tags = new ctags.CTags(vscode.workspace.rootPath || '', tagsfile);
 
   const definitionsProvider = new CTagsDefinitionProvider();
   vscode.languages.registerDefinitionProvider(
@@ -193,13 +135,6 @@ export function activate(context: vscode.ExtensionContext) {
     completionProvider
   );
 
-  const reloadCTagsCommand = vscode.commands.registerCommand(
-    'extension.reloadCTags',
-    () => {
-      reindexTags();
-    }
-  );
-
   const regenerateCTagsCommand = vscode.commands.registerCommand(
     'extension.regenerateCTags',
     () => {
@@ -207,7 +142,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(reloadCTagsCommand);
   context.subscriptions.push(regenerateCTagsCommand);
 
   vscode.workspace.onDidSaveTextDocument(event => {

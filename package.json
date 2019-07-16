@@ -24,10 +24,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.reloadCTags",
-        "title": "Ctags Support: reload tags file"
-      },
-      {
         "command": "extension.regenerateCTags",
         "title": "Ctags Support: regenerate tags file"
       }
