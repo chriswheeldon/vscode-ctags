@@ -106,13 +106,15 @@ function regenerateCTags() {
     args && args.length
       ? `Generating CTags index (${args.join(' ')})`
       : 'Generating CTags index';
-  vscode.window.withProgress(
+  return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Window,
       title
     },
-    async (progress, token) => {
-      await tags.regenerate(regenerateArgs());
+    (progress, token) => {
+      return tags.regenerate(regenerateArgs()).catch(err => {
+        vscode.window.setStatusBarMessage('Generating CTags failed: ' + err);
+      });
     }
   );
 }
@@ -127,7 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.setStatusBarMessage('CTags index loaded', 2000);
     })
     .catch(() => {
-      regenerateCTags();
+      return regenerateCTags();
     });
 
   const definitionsProvider = new CTagsDefinitionProvider();

@@ -61,7 +61,7 @@ export class CTags {
   }
 
   private regenerateFile(args?: string[]): Promise<void> {
-    return new Promise((resolve, _) => {
+    return new Promise((resolve, reject) => {
       const command = ['ctags']
         .concat(args || [])
         .concat([`-R`])
@@ -73,6 +73,7 @@ export class CTags {
         (err, stdout, stderr) => {
           if (err) {
             log(command, err, stdout, stderr);
+            reject(stderr);
           }
           resolve();
         }
